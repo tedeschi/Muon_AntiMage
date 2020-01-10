@@ -1,0 +1,51 @@
+Muon_AntiMaGe README
+
+
+
+Software Requirement
+--------------------
+
+ROOT 6.06 or later
+CLHEP 2.3.2.2
+GEANT 4.10.02
+
+Building
+---------
+
+cd  Muon_AntiMaGe/
+mkdir build
+cd build
+cmake -DGeant4_DIR=$G4LIB ../
+make
+
+
+
+Interactive Running
+--------------------
+in build directory...
+
+./Muon_AntiMaGe
+
+this will use the vis.mac macro file to see geometry
+
+
+
+Batch Running
+--------------------
+in build directory...
+
+Muon_AntiMaGe batch.mac >& MuonAntiMaGe.log &
+
+
+
+Output
+-------
+ROOT file - Muon_AntiMaGe.root
+
+contains histograms and tree
+
+
+see vetoAnaSim directory for program to analyze output TTree
+
+to remove secondaries - change line 63 of StackingAction to fKill
+to get same events set seed to a particular number in main routine
