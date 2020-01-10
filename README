@@ -1,6 +1,6 @@
 Muon_AntiMaGe README
 simulates muon from an hemisphere
-for all muons that are within 5 meters within the modules the full secondaries will be simulated
+for all muons that are within 5 meters within the modules the full secondaries will be simulated (can change this in the Stepping Action)
 
 
 Software Requirement
