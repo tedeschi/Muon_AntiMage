@@ -1,5 +1,6 @@
 Muon_AntiMaGe README
-
+simulates muon from an hemisphere
+for all muons that are within 5 meters within the modules the full secondaries will be simulated
 
 
 Software Requirement
@@ -27,7 +28,7 @@ in build directory...
 ./Muon_AntiMaGe
 
 this will use the vis.mac macro file to see geometry
-
+vis.mac I use VRML (actually not bad)
 
 
 Batch Running
@@ -35,7 +36,7 @@ Batch Running
 in build directory...
 
 Muon_AntiMaGe batch.mac >& MuonAntiMaGe.log &
-
+check submit.sh for submitting a number of obs with run number
 
 
 Output
@@ -43,7 +44,9 @@ Output
 ROOT file - Muon_AntiMaGe.root
 
 contains histograms and tree
-
+- channel 0..99 veto panels, check definition in DetectorConstruction
+- channel 100..199 M1 detectors (Crypstat + Position + String, e.g C1P3D4 is 134)
+- channel 200..299 M2 detectors 9
 
 see vetoAnaSim directory for program to analyze output TTree
 
