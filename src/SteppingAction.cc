@@ -13,6 +13,7 @@
 #include "G4RunManager.hh"
 #include "G4UnitsTable.hh"
 #include "G4ThreeVector.hh"
+#include "G4TrackStatus.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -53,7 +54,11 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
   }
   if((particleType="mu-")&&(position.mag() < 5*CLHEP::m)){
    stackingaction->Veto();  //only follow up with full simulation if incident muon is within 5 m of the origin (between M1 and M2)
-  }  
+  }
+  //kill everyting below -5m to speed up things
+  if(position.getZ() < -5*CLHEP::m){
+    step->GetTrack()->SetTrackStatus(fStopAndKill);
+  }
 }
 
 

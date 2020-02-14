@@ -51,25 +51,23 @@ StackingAction::ClassifyNewTrack(const G4Track * aTrack)
   switch(stage)
   {
   case 0: // Stage 0 : Primary muons only
+    {
     if(aTrack->GetParentID()==0) {
       G4ParticleDefinition * particleType = aTrack->GetDefinition();
       if(particleType==G4MuonMinus::MuonMinusDefinition()){
-		  classification = fUrgent;
-	  }
-  }
-  break;
-
-  default: {
-	  classification = fUrgent;
-    //classification = fKill;
-
-/*
-	  if(aTrack->GetKineticEnergy() < 10*MeV){
+		    classification = fUrgent;
+	      }
+      }
+    break;
+    }
+  default: //Stage 1: all other particles, dont start the ones below a certain depth (-1.1m is lower veto panel)
+    {
+   	classification = fUrgent;
+    if(aTrack->GetPosition().getZ() < -2*CLHEP::m){
 	    classification = fKill;
 	    break;
-  	  }
-*/
-	}
+      } 
+    }
   }
   return classification;
 }
