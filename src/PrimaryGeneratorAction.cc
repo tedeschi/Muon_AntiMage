@@ -88,10 +88,10 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 //  fParticleGun->SetParticleMomentumDirection(dir);
 
   // particle must go through the floor of the hemisphere
-  double radius = 30.0*m;
+  double radius = 10.0*m;
   double theLowerX = radius-2*radius*G4UniformRand();
   double theLowerY = radius-2*radius*G4UniformRand();
-  double theLowerZ = -5.0*m;
+  double theLowerZ = 0.0*m;
   //G4cout << "LowerX= " << theLowerX << " " << "LowerY= " << theLowerY << " "<< "LowerZ= " << theLowerZ << " " << G4endl;
   double outsideBound = std::pow(theLowerX,2) + std::pow(theLowerY,2); //eq for the circle inside box
   while(outsideBound > std::pow(radius,2)) { //if the point falls outside the circle, select a new one
@@ -114,25 +114,26 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 
 
   //compute track direction (note left handed coord system)
-  double Xtrk = theLowerX-theUpperX;
-  double Ytrk = theLowerY-theUpperY;
-  double Ztrk = theLowerZ-theUpperZ;
+  double Xtrk = theUpperX-theLowerX;
+  double Ytrk = theUpperY-theLowerY;
+  double Ztrk = theUpperZ-theLowerZ;
+
   double Rtrk = std::sqrt(Xtrk*Xtrk + Ytrk*Ytrk + Ztrk*Ztrk);
   double ThetaTrk=acos(Ztrk/Rtrk);
   double PhiTrk=0.;
-  if (Ytrk == 0){
-    if (Xtrk > 0) PhiTrk = 3.14159/2.;
-    if (Xtrk < 0) PhiTrk = -3.14159/2.;
+  if (Xtrk == 0){
+    if (Ytrk > 0) PhiTrk = 1.5708;    //90 degrees
+    if (Ytrk < 0) PhiTrk = 4.7124;    //270 degrees
   }
   else{
-    PhiTrk=atan(std::abs(Xtrk)/std::abs(Ytrk));
-    if ((Ytrk < 0) && (Xtrk > 0)) PhiTrk = 3.14159/2.+ PhiTrk;
-    if ((Ytrk < 0) && (Xtrk <= 0)) PhiTrk = -3.14159/2. - PhiTrk;
-    if ((Ytrk > 0) && (Xtrk < 0)) PhiTrk = - PhiTrk;
+    PhiTrk=atan(std::abs(Ytrk)/std::abs(Xtrk));
+    if ((Xtrk < 0) && (Ytrk > 0)) PhiTrk = 3.14159 - PhiTrk;
+    if ((Xtrk < 0) && (Ytrk <= 0)) PhiTrk = 3.14159 + PhiTrk;
+    if ((Xtrk > 0) && (Ytrk < 0)) PhiTrk = 6.2832 - PhiTrk;
   }
   //G4cout << "ThetaTrk= " << ThetaTrk << " PhiTrk= " << PhiTrk << G4endl << G4endl;
   //set direction of particle (inward)
-  G4ThreeVector dir(std::sin(ThetaTrk)*std::cos(PhiTrk),std::sin(ThetaTrk)*std::sin(PhiTrk),std::cos(ThetaTrk));
+  G4ThreeVector dir(-std::sin(ThetaTrk)*std::cos(PhiTrk),-std::sin(ThetaTrk)*std::sin(PhiTrk),-std::cos(ThetaTrk));
   fParticleGun->SetParticleMomentumDirection(dir);
 
   fParticleGun->GeneratePrimaryVertex(anEvent);
