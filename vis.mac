@@ -6,8 +6,8 @@
 #
 # Use this open statement to create an OpenGL view:
 #/vis/open OGL 600x600-0+0
-#/vis/open OGLSX 600x600-0+0
-/vis/open VRML1FILE
+/vis/open OGLSX 600x600-0+0
+#/vis/open RayTracer
 
 # Disable auto refresh and quieten vis messages whilst scene and
 # trajectories are established:
@@ -26,11 +26,11 @@
 /vis/viewer/set/style wireframe
 
 /vis/viewer/set/hiddenMarker true
-/vis/viewer/set/viewpointThetaPhi
+/vis/viewer/set/viewpointThetaPhi 90 0
+#/vis/viewer/set/viewpointThetaPhi 30 50
 #/vis/viewer/set/auxiliaryEdge true
 /vis/viewer/set/lineSegmentsPerCircle 100
-/vis/viewer/zoom 40
-
+/vis/viewer/zoom 7
 
 # draVolume creates the scene, adds physical volumes to the scene, attaches the scene handler, executes visualization
 # flush declares end of visualizing
@@ -59,6 +59,4 @@
 
 # To superimpose all of the events from a given run:
 /vis/scene/endOfEventAction accumulate
-
-/vis/viewer/update
 #
