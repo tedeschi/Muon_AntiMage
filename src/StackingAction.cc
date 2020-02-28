@@ -55,6 +55,7 @@ StackingAction::ClassifyNewTrack(const G4Track * aTrack)
     if(aTrack->GetParentID()==0) {
       G4ParticleDefinition * particleType = aTrack->GetDefinition();
       if(particleType==G4MuonMinus::MuonMinusDefinition()){
+        //G4cout << "++++++  stacking action - tracking muons" << G4endl;
 		    classification = fUrgent;
 	      }
       }
@@ -65,8 +66,9 @@ StackingAction::ClassifyNewTrack(const G4Track * aTrack)
    	classification = fUrgent;
     if(aTrack->GetPosition().getZ() < -2*CLHEP::m){
 	    classification = fKill;
+      //G4cout << "++++++++ stacking action - kill particles : aTrack->GetPosition().getZ() = " << aTrack->GetPosition().getZ() << G4endl;
 	    break;
-      } 
+      }
     }
   }
   return classification;
