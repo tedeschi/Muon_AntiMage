@@ -29,6 +29,7 @@
 /// \brief Implementation of the PrimaryGeneratorAction class
 
 #include "PrimaryGeneratorAction.hh"
+#include "RunAction.hh"
 
 #include "G4LogicalVolumeStore.hh"
 #include "G4LogicalVolume.hh"
@@ -40,6 +41,13 @@
 #include "G4ParticleDefinition.hh"
 #include "G4SystemOfUnits.hh"
 #include "Randomize.hh"
+
+#include "TFile.h"
+#include "TTree.h"
+#include <TH1D.h>
+#include <TH2F.h>
+#include <TH3F.h>
+
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -74,11 +82,39 @@ PrimaryGeneratorAction::~PrimaryGeneratorAction()
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//----------------------------------------------------------------------------
+// Differential Muon Intensity /cm^2/s/sr
+// Mei Hime - PhysRevD.73.053004 (2006)
+//
+// input is slant depth in km w.e.
+//
+Double_t I_M_H(Double_t h){
+	Double_t I1=8.6E-6;
+	Double_t I2 = 0.44E-6;
+	Double_t lam1=0.45;
+	Double_t lam2=0.87;
+  return I1*exp(-h/lam1)+I2*exp(-h/lam2);
+}
 
 void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 {
-  G4ParticleDefinition* particle = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
-  fParticleGun->SetParticleDefinition(particle);
+//
+// read in Slant depth histogram
+//
+TFile *fSlantDepth = new TFile("slantHist.root");
+TH2F *hSlantDepthHigh = (TH2F*)fSlantDepth->Get("slantHighTheta");
+TH2F *hSlantDepthLow = (TH2F*)fSlantDepth->Get("slantLowTheta");
+
+G4ParticleDefinition* particle = G4ParticleTable::GetParticleTable()->FindParticle("mu-");
+fParticleGun->SetParticleDefinition(particle);
+
+bool trackAccepted{false};
+double ThetaTrk;
+double PhiTrk;
+double slantDepth;
+double slantDepth_kmwe;
+
+while (!trackAccepted){
   double MuonEnergy = 1.0*GeV+199999.0*G4UniformRand()*GeV;  //1GeV-200TeV (1x10^9-200x10^12)
 
   fParticleGun->SetParticleEnergy(MuonEnergy);
@@ -86,6 +122,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
 //  fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., 20*m));
 //  G4ThreeVector dir(0,0,-1.);
 //  fParticleGun->SetParticleMomentumDirection(dir);
+
+
 
   // particle must go through the floor of the hemisphere
   double radius = 10.0*m;
@@ -119,8 +157,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   double Ztrk = theUpperZ-theLowerZ;
 
   double Rtrk = std::sqrt(Xtrk*Xtrk + Ytrk*Ytrk + Ztrk*Ztrk);
-  double ThetaTrk=acos(Ztrk/Rtrk);
-  double PhiTrk=0.;
+  ThetaTrk=acos(Ztrk/Rtrk);
+  PhiTrk=0.;
   if (Xtrk == 0){
     if (Ytrk > 0) PhiTrk = 1.5708;    //90 degrees
     if (Ytrk < 0) PhiTrk = 4.7124;    //270 degrees
@@ -131,12 +169,48 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
     if ((Xtrk < 0) && (Ytrk <= 0)) PhiTrk = 3.14159 + PhiTrk;
     if ((Xtrk > 0) && (Ytrk < 0)) PhiTrk = 6.2832 - PhiTrk;
   }
-  //G4cout << "ThetaTrk= " << ThetaTrk << " PhiTrk= " << PhiTrk << G4endl << G4endl;
+  //G4cout << "ThetaTrk= " << ThetaTrk << " PhiTrk= " << PhiTrk << G4endl;
+
+// get slantdepth from look-up histogram
+  const float DEG_60_IN_RADS = 60 * M_PI/180;
+  if (ThetaTrk >= DEG_60_IN_RADS)
+  {
+    slantDepth = hSlantDepthHigh->Interpolate(PhiTrk*57.296, ThetaTrk*57.296);
+  }
+  else
+  {
+    slantDepth = hSlantDepthLow->Interpolate(PhiTrk*57.296, ThetaTrk*57.296);
+  }
+  slantDepth_kmwe = slantDepth*2.86/1000.;
+//  G4cout << slantDepth << " " << slantDepth_kmwe << G4endl;
+
+  // given depth for theta, phi use accept/reject method sample the experimental intensity Distribution
+  // keep only accepted Events
+  // Generate a number between the upper and lower bounds for the selected slant depth
+  // Maximum intensity
+  const double approxMinSlantDepth = 4; //hSlantDepth->GetBinContent(hSlantDepth->FindBin(0, 0, 0));
+  const double approxMaxIntensity = I_M_H(approxMinSlantDepth);
+// Minimum intensity
+  const double approxMaxSlantDepth = 7;
+  const double approxMinIntensity = I_M_H(approxMaxSlantDepth); //0.0; // We could be more precise by finding the intensity that corresponds to the maximum slant depth
+  // Random intensity in that range
+  const double randomIntensity = (approxMaxIntensity - approxMinIntensity) * G4UniformRand();
+  // Determine whether to reject the current event
+  // The intensity that corresponds to the currently examined track
+  const double currentTrackIntensity = I_M_H(slantDepth_kmwe);
+  // Where the current track intensity is higher, the track will be accepted a higher proportion of the time
+  trackAccepted = (randomIntensity < currentTrackIntensity);
+}
+//G4cout << slantDepth << " " << slantDepth_kmwe << G4endl;
+//runAct->start_slantDepth = slantDepth;
+//runAct->start_slantDepth_kmwe = slantDepth_kmwe;
+
   //set direction of particle (inward)
   G4ThreeVector dir(-std::sin(ThetaTrk)*std::cos(PhiTrk),-std::sin(ThetaTrk)*std::sin(PhiTrk),-std::cos(ThetaTrk));
   fParticleGun->SetParticleMomentumDirection(dir);
 
   fParticleGun->GeneratePrimaryVertex(anEvent);
+  fSlantDepth->Close();
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
