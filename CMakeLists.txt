@@ -77,6 +77,7 @@ set(Muon_AntiMaGe_SCRIPTS
   Detectorposition.txt
   batch.mac
   submit.sh
+  slantHist.root
   )
 
 foreach(_script ${Muon_AntiMaGe_SCRIPTS})
@@ -91,5 +92,3 @@ endforeach()
 # Install the executable to 'bin' directory under CMAKE_INSTALL_PREFIX
 #
 install(TARGETS Muon_AntiMaGe DESTINATION bin)
-
-
